@@ -1,7 +1,6 @@
 # ===================== INTRADAY SCRAPING - YAHOO FINANCE - JSON OBJECT ===================
 ## Basic Scraping tool to get some Intraday Data from Interactive Charts JSON source parsed from Yahoo Finance
 
-
 Intraday_yf<-function(ticker,s_date,e_date,freq) {
   
   library(jsonlite) # Need to Load JSON Parser Library
@@ -129,7 +128,12 @@ stockframe$var <- c(rolling_var[1:length(rolling_var)])
 stockframe$sd <- c(sqrt(rolling_var[1:length(rolling_var)]))
 
 
-par(mfrow=c(3,3))
+par(mfrow=c(5,5)) # Sizing the Subplot Window
+
+par(oma=c(0,0,3,0)) # Customizing Outer Margins for plotting
+
+par(mar=c(1.8,1.8,1.8,1.8)) # Customizing Regular Margins for plotting
+
 # Standard Deviation Plot
 for (i in seq(0,nrow(stockframe)-26,26)) {
   
@@ -144,6 +148,8 @@ for (i in seq(0,nrow(stockframe)-26,26)) {
   ## http://www.carlislerainey.com/2012/12/28/how-to-add-an-extra-vertical-axis-to-r-plots/
   
   axis(side=4)}
+
+title(main="Intraday Volume vs. Volatility",outer=T)
 
 par(mfrow=c(1,1))
 
@@ -310,10 +316,62 @@ volume_forecasting<-function(stocks,date_s,date_e){
   ### Define the Sample Period (All Dayss - The Last One (Out-Of Sample Testing))
   n<-nrow(turnover_data)-26
   
+  end<-nrow(turnover_data)
+  
   m<-ncol(turnover_data)
   
   sample<-as.matrix(turnover_data[1:n,])
   
+  # Creating the Matrix S = XX' and extracting EigenValues / EigenVectors
+  
+  S<-sample %*% t(sample)
+  D<-eigen(S)$values
+  V<-eigen(S)$vectors
+  
+  # Suppose we take only the first EigenVector (atually to determine the number you should plot the eigvalues)
+  
+  # Getting Factors and Factors Loadings, as well as Residual
+  
+  Eig<-V[,1]
+  Fact<-sqrt(n)*Eig
+  
+  Lambda<- Fact %*% sample /n
+  K <- Fact %*% Lambda
+  IC<-sample -K
+  
+  # Forecast the seasonal component (through average of previous days)
+  K26 <- matrix(0,26,m)
+  
+  for (i in 1:m) {
+    
+    tmp<-matrix(K[,i],26,n/26)
+    K26[,i]<-rowMeans(tmp)
+    
+  }
+  
+  # Forecasting the Dynamic Component with AR(1)
+  
+  library(forecast)
+  
+  models<-lapply(1:m, function(i) Arima(IC[,i],order=c(1,0,0),method="CSS"))
+  
+  ARf<-sapply(1:m, function(i) forecast(models[[i]],h=26)$mean)
+  
+  # Now we store the FULL Forecast in vol_forecast
+  vol_forecast<-K26+ARf
+  
+  par(mfrow=c(3,3))
+  
+  par(mar=c(2,2,2,2))
+  
+  par(oma=c(0,0,0,0))
+  
+  for (i in 1:m) {
+    
+    matplot(cbind(vol_forecast[,i],turnover_data[(n+1):end,i]), type=c("l","l"),xlab="",ylab="",col=c("red","blue"),lwd=2)
+    
+    
+  }
   
   
   
