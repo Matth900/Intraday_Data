@@ -1,7 +1,5 @@
 # ===================== INTRADAY SCRAPING - YAHOO FINANCE - JSON OBJECT ===================
 ## Basic Scraping tool to get some Intraday Data from Interactive Charts JSON source parsed from Yahoo Finance
-## Please look at the same routing written in Python 2.7 and build from there
-### Also to use for Educational purposes (Chapter 3 - Master R for Quantiative Finance)
 
 Intraday_yf<-function(ticker,s_date,e_date,freq) {
   
