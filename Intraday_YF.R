@@ -1,6 +1,7 @@
 # ===================== INTRADAY SCRAPING - YAHOO FINANCE - JSON OBJECT ===================
 ## Basic Scraping tool to get some Intraday Data from Interactive Charts JSON source parsed from Yahoo Finance
 
+
 Intraday_yf<-function(ticker,s_date,e_date,freq) {
   
   library(jsonlite) # Need to Load JSON Parser Library
@@ -98,15 +99,23 @@ rolling_intra_sd<-function(stockframe) {
     
     for (j  in seq(1,26)) {
         
-        if (j==1) {
+        if (j==1 && i == 1) {
           
           new_item<-c(stockframe[i+1,"ret_sq"])
           
-        } else {
+        } else if (j==1 && i>1) {
+        
+          new_item<-c(stockframe[i,"ret_sq"])
+        
+        }
+        
+        else {
           
           #new_item<-(stockframe[i+j,"ret_sq"]+stockframe[i+j-1,"ret_sq"])/(j-1) }
           
-          new_item<-(stockframe[i+j,"ret_sq"]+(rolling_var[length(rolling_var)]*(j-1)))/(j) 
+          #new_item<-(stockframe[i+j,"ret_sq"]+(rolling_var[length(rolling_var)]*(j-1)))/(j) 
+          
+          new_item<-mean(stockframe[i:(i+j),"ret_sq"])
           
         }
         
@@ -116,8 +125,8 @@ rolling_intra_sd<-function(stockframe) {
   
 }
 
-stockframe$var <- c(0,rolling_var[1:length(rolling_var)-1])
-stockframe$sd <- c(0,sqrt(rolling_var[1:length(rolling_var)-1]))
+stockframe$var <- c(rolling_var[1:length(rolling_var)])
+stockframe$sd <- c(sqrt(rolling_var[1:length(rolling_var)]))
 
 
 par(mfrow=c(3,3))
